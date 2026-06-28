@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local databases and runtime data directories (auto-created on run)
+data/
+output/
+temp_uploads/
+
+# Auto-generated visualization libraries by pyvis
+lib/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# OS-specific files
+.DS_Store
+Thumbs.db
