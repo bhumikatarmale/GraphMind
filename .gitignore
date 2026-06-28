@@ -20,3 +20,8 @@ env/
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Project documentation / submission files (local only)
+*.docx
+*.xlsx
+*.pdf
