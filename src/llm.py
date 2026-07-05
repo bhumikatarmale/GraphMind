@@ -119,6 +119,7 @@ def generate_text(prompt: str, system_instruction: str = None, task: str = "fast
             "model": model_name,
             "prompt": prompt,
             "stream": False,
+            "keep_alive": "1m",
             "options": {"temperature": 0.0}
         }
         if system_instruction:
@@ -197,6 +198,7 @@ def generate_vision(image_bytes: bytes, mime_type: str, prompt: str) -> str:
             "prompt": prompt,
             "images": [base64_image],
             "stream": False,
+            "keep_alive": "1m",
             "options": {"temperature": 0.0}
         }
         try:
@@ -234,7 +236,8 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
         url = f"{cfg['ollama_url']}/api/embed"
         payload = {
             "model": cfg["ollama_embed"],
-            "input": texts
+            "input": texts,
+            "keep_alive": "1m"
         }
         response = requests.post(url, json=payload, timeout=90)
         response.raise_for_status()
