@@ -119,6 +119,7 @@ def generate_text(prompt: str, system_instruction: str = None, task: str = "fast
             "model": model_name,
             "prompt": prompt,
             "stream": False,
+            "keep_alive": "1m",
             "options": {"temperature": 0.0}
         }
         if system_instruction:
@@ -136,15 +137,25 @@ def generate_text(prompt: str, system_instruction: str = None, task: str = "fast
             raise e
 
 def clean_json_string(text: str) -> str:
-    """Helper to strip markdown backticks and clean a string so it can be parsed as JSON"""
+    """Helper to strip markdown backticks and clean a string so it can be parsed as JSON.
+    Also escapes any invalid backslash sequences (e.g. \\e, \\s, \\p) produced by
+    small local LLMs that are not valid JSON escape characters.
+    """
     # Remove markdown code blocks if present
     match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
     if match:
-        return match.group(1).strip()
-    match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
-    return text.strip()
+        text = match.group(1).strip()
+    else:
+        match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
+        if match:
+            text = match.group(1).strip()
+    text = text.strip()
+
+    # Escape invalid backslash sequences so json.loads won't throw JSONDecodeError.
+    # Valid JSON escape chars after \\ are: " \\ / b f n r t and u followed by 4 hex digits.
+    # Any other \\X sequence is illegal and must be doubled to \\\\\
+    text = re.sub(r'\\(?!["\\\'/bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', text)
+    return text
 
 def generate_json(prompt: str, system_instruction: str = None, task: str = "fast") -> dict | list:
     """Generate and parse JSON from the LLM. Retries once with clean prompt on JSON parse failure."""
@@ -187,6 +198,7 @@ def generate_vision(image_bytes: bytes, mime_type: str, prompt: str) -> str:
             "prompt": prompt,
             "images": [base64_image],
             "stream": False,
+            "keep_alive": "1m",
             "options": {"temperature": 0.0}
         }
         try:
@@ -224,7 +236,8 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
         url = f"{cfg['ollama_url']}/api/embed"
         payload = {
             "model": cfg["ollama_embed"],
-            "input": texts
+            "input": texts,
+            "keep_alive": "1m"
         }
         response = requests.post(url, json=payload, timeout=90)
         response.raise_for_status()
